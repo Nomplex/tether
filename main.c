@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sqlite3.h>
+#include <unistd.h>
 
 #define DB "tether.db"
 
@@ -43,8 +44,16 @@ void tether_add(char *path, char *nickname, sqlite3 *db)
 
     char *error = NULL;
     char addSQL[1024];
+    char dir[1024];
 
-    snprintf(addSQL, sizeof(addSQL), "INSERT INTO tethers (path, nickname) VALUES ('%s', '%s');", path, nickname);
+    strcmp(path, ".") == 0 ? getcwd(dir, 1024) : strcpy(dir, path);
+
+    if (dir == NULL) {
+        fprintf(stderr, "Couldn't get the current working directory");
+        exit(EXIT_FAILURE);
+    }
+
+    snprintf(addSQL, sizeof(addSQL), "INSERT INTO tethers (path, nickname) VALUES ('%s', '%s');", dir, nickname);
     if (sqlite3_exec(db, addSQL, NULL, NULL, &error) != SQLITE_OK) {
         fprintf(stderr, "Something went wrong with adding into the database\n");
         sqlite3_free(error);
