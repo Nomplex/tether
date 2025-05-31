@@ -10,6 +10,7 @@
 bool tether_init(sqlite3 *db);
 void tether_add(char *path, char *nickname, sqlite3 *db);
 void tether_remove(char *nickname, sqlite3 *db);
+void tether_recall(char *nicname, sqlite3 *db);
 
 int main(int argc, char *argv[])
 {
@@ -33,6 +34,12 @@ int main(int argc, char *argv[])
         tether_add(argv[2], argv[3], db);
     else if (strcmp(argv[1], "rm") == 0)
         tether_remove(argv[2], db);
+    else if (strcmp(argv[1], "tp") == 0)
+        tether_recall(argv[2], db);
+    else
+        printf("Shut up\n");
+
+    sqlite3_close(db);
 
     return 0;
 }
@@ -74,6 +81,28 @@ void tether_remove(char *nickname, sqlite3 *db)
         sqlite3_free(error);
     }
 }
+
+int p(void *v, int i, char **c, char **cc)
+{
+    printf("%s\n", *c);
+    printf("%s\n", *cc);
+}
+
+void tether_recall(char *nickname, sqlite3 *db)
+{
+    if (!nickname)
+        exit(EXIT_FAILURE);
+
+    char *error = NULL;
+    char recallSQL[1024];
+
+    snprintf(recallSQL, sizeof(recallSQL), "SELECT path FROM tethers WHERE nickname = '%s';", nickname);
+    if (sqlite3_exec(db, recallSQL, p, NULL, &error) != SQLITE_OK) {
+        fprintf(stderr, "Something went wrong with selecting an item from the database\n");
+        sqlite3_free(error);
+    }
+}
+
 
 bool tether_init(sqlite3 *db)
 {
